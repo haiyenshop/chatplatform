@@ -8,6 +8,12 @@ import { useVuelidate } from '@vuelidate/core';
 import { SESSION_STORAGE_KEYS } from 'dashboard/constants/sessionStorage';
 import SessionStorage from 'shared/helpers/sessionStorage';
 import { useBranding } from 'shared/composables/useBranding';
+import {
+  buildAlbumpikLoginUrl,
+  isAlbumpikSsoEnabled,
+  shouldAutoRedirectToAlbumpikLogin,
+  shouldShowNativeLoginOptions,
+} from 'shared/helpers/AlbumpikSsoHelper';
 
 // components
 import SimpleDivider from '../../components/Divider/SimpleDivider.vue';
@@ -41,6 +47,8 @@ export default {
     ssoAuthToken: { type: String, default: '' },
     ssoAccountId: { type: String, default: '' },
     ssoConversationId: { type: String, default: '' },
+    returnTo: { type: String, default: '' },
+    requestedStudioId: { type: String, default: '' },
     email: { type: String, default: '' },
     authError: { type: String, default: '' },
   },
@@ -89,20 +97,56 @@ export default {
     },
     showGoogleOAuth() {
       return (
+        this.showNativeLoginOptions &&
         this.allowedLoginMethods.includes('google_oauth') &&
         Boolean(window.chatwootConfig.googleOAuthClientId)
       );
     },
     showSignupLink() {
-      return window.chatwootConfig.signupEnabled === 'true';
+      return (
+        this.showNativeLoginOptions &&
+        window.chatwootConfig.signupEnabled === 'true'
+      );
     },
     showSamlLogin() {
-      return this.allowedLoginMethods.includes('saml');
+      return (
+        this.showNativeLoginOptions && this.allowedLoginMethods.includes('saml')
+      );
+    },
+    showAlbumpikLogin() {
+      return isAlbumpikSsoEnabled(window.chatwootConfig);
+    },
+    showNativeLoginOptions() {
+      return (
+        shouldShowNativeLoginOptions(window.chatwootConfig) ||
+        !this.showAlbumpikLogin
+      );
+    },
+    albumpikLoginUrl() {
+      return buildAlbumpikLoginUrl({
+        chatwootConfig: window.chatwootConfig,
+        returnTo: this.returnTo,
+        studioId: this.requestedStudioId,
+      });
+    },
+    shouldAutoRedirectToAlbumpik() {
+      return (
+        !this.email &&
+        !this.ssoAuthToken &&
+        !this.authError &&
+        this.showAlbumpikLogin &&
+        shouldAutoRedirectToAlbumpikLogin(window.chatwootConfig)
+      );
     },
   },
   created() {
     if (this.ssoAuthToken) {
       this.submitLogin();
+      return;
+    }
+    if (this.shouldAutoRedirectToAlbumpik) {
+      this.redirectToAlbumpikLogin();
+      return;
     }
     if (this.authError) {
       const messageKey = ERROR_MESSAGES[this.authError] ?? 'LOGIN.API.UNAUTH';
@@ -156,6 +200,11 @@ export default {
       if (impersonation) {
         SessionStorage.set(SESSION_STORAGE_KEYS.IMPERSONATION_USER, true);
       }
+    },
+    redirectToAlbumpikLogin() {
+      if (!this.albumpikLoginUrl) return;
+
+      window.location.assign(this.albumpikLoginUrl);
     },
     submitLogin() {
       this.loginApi.hasErrored = false;
@@ -265,6 +314,23 @@ export default {
     >
       <div v-if="!email">
         <div class="flex flex-col gap-4">
+          <div
+            v-if="showAlbumpikLogin"
+            class="p-5 rounded-xl bg-n-brand/5 border border-n-brand/10 dark:bg-n-alpha-2 dark:border-n-solid-3"
+          >
+            <p class="mb-4 text-sm text-center text-n-slate-11">
+              {{ $t('LOGIN.ALBUMPIK.SUBTITLE') }}
+            </p>
+            <a
+              :href="albumpikLoginUrl"
+              class="inline-flex justify-center w-full px-4 py-3 items-center bg-n-brand text-white rounded-md shadow-sm focus:outline-offset-0 hover:opacity-90"
+            >
+              <Icon icon="i-lucide-log-in" class="size-5 text-white" />
+              <span class="ml-2 text-base font-medium text-white">
+                {{ $t('LOGIN.ALBUMPIK.BUTTON') }}
+              </span>
+            </a>
+          </div>
           <GoogleOAuthButton v-if="showGoogleOAuth" />
           <div v-if="showSamlLogin" class="text-center">
             <router-link
@@ -281,12 +347,19 @@ export default {
             </router-link>
           </div>
           <SimpleDivider
-            v-if="showGoogleOAuth || showSamlLogin"
+            v-if="
+              showNativeLoginOptions &&
+              (showAlbumpikLogin || showGoogleOAuth || showSamlLogin)
+            "
             :label="$t('COMMON.OR')"
             class="uppercase"
           />
         </div>
-        <form class="space-y-5" @submit.prevent="submitFormLogin">
+        <form
+          v-if="showNativeLoginOptions"
+          class="space-y-5"
+          @submit.prevent="submitFormLogin"
+        >
           <FormInput
             v-model="credentials.email"
             name="email_address"

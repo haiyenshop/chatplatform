@@ -18,6 +18,8 @@ export default [
       ssoAuthToken: route.query.sso_auth_token,
       ssoAccountId: route.query.sso_account_id,
       ssoConversationId: route.query.sso_conversation_id,
+      returnTo: route.query.return_to,
+      requestedStudioId: route.query.studio_id,
       authError: route.query.error,
     }),
   },

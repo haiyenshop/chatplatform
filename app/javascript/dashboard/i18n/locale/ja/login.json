@@ -23,6 +23,10 @@
     "FORGOT_PASSWORD": "パスワードをお忘れですか?",
     "CREATE_NEW_ACCOUNT": "新しいアカウントを作成",
     "SUBMIT": "ログイン",
+    "ALBUMPIK": {
+      "BUTTON": "AlbumPikでログイン",
+      "SUBTITLE": "AlbumPikアカウントを使ってChatwootへ進みます。"
+    },
     "SAML": {
       "LABEL": "Login via SSO",
       "TITLE": "Initiate Single Sign-on (SSO)",

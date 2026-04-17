@@ -23,6 +23,10 @@
     "FORGOT_PASSWORD": "Quên mật khẩu?",
     "CREATE_NEW_ACCOUNT": "Tạo mới tài khoản",
     "SUBMIT": "Đăng nhập",
+    "ALBUMPIK": {
+      "BUTTON": "Đăng nhập với AlbumPik",
+      "SUBTITLE": "Dùng tài khoản AlbumPik của bạn để tiếp tục vào Chatwoot."
+    },
     "SAML": {
       "LABEL": "Login via SSO",
       "TITLE": "Initiate Single Sign-on (SSO)",
