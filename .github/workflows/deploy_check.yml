@@ -1,12 +1,23 @@
-## github action to check deployment success
-## curl the deployment url and check for 200 status
-## deployment url will be of the form chatwoot-pr-<pr_number>.herokuapp.com
+## Optional: poll GET {base}/api until Chatwoot returns a healthy JSON payload.
+##
+## Bật bằng GitHub repo/org → Settings → Secrets and variables → Actions → Variables:
+##
+## • EC2 / staging cố định:
+##   DEPLOY_CHECK_BASE_URL = https://chat.staging.yourdomain.com   (không dấu / cuối)
+##
+## • Giống upstream Chatwoot (Heroku review app theo số PR):
+##   DEPLOY_CHECK_USE_CHATWOOT_HEROKU_REVIEW_APP = true
+##
+## • Tuỳ chọn:
+##   DEPLOY_CHECK_API_PATH = /api          (mặc định /api)
+##   DEPLOY_CHECK_INITIAL_SLEEP_SEC = 60   (chờ app khởi động trước khi poll; Heroku hay cần 600)
+##
+## Nếu không set BASE_URL và không bật HEROKU → job bị skip (không fail PR).
 name: Deploy Check
 
 on:
   pull_request:
 
-# If two pushes happen within a short time in the same PR, cancel the run of the oldest push
 concurrency:
   group: pr-${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
@@ -15,36 +26,71 @@ jobs:
   deployment_check:
     name: Check Deployment
     runs-on: ubuntu-latest
+    if: ${{ vars.DEPLOY_CHECK_BASE_URL != '' || vars.DEPLOY_CHECK_USE_CHATWOOT_HEROKU_REVIEW_APP == 'true' }}
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      DEPLOY_CHECK_BASE_URL: ${{ vars.DEPLOY_CHECK_BASE_URL }}
+      USE_HEROKU_REVIEW: ${{ vars.DEPLOY_CHECK_USE_CHATWOOT_HEROKU_REVIEW_APP }}
+      API_PATH: ${{ vars.DEPLOY_CHECK_API_PATH }}
+      INITIAL_SLEEP: ${{ vars.DEPLOY_CHECK_INITIAL_SLEEP_SEC }}
     steps:
       - name: Install jq
         run: sudo apt-get install -y jq
-      - name: Print Deployment URL
-        run: echo "https://chatwoot-pr-${{ github.event.pull_request.number }}.herokuapp.com"
-      - name: Check Deployment Status
+      - name: Resolve deploy URL
+        id: url
         run: |
+          set -euo pipefail
+          BASE=""
+          if [ -n "${DEPLOY_CHECK_BASE_URL:-}" ]; then
+            BASE="${DEPLOY_CHECK_BASE_URL}"
+          elif [ "${USE_HEROKU_REVIEW:-}" = "true" ]; then
+            BASE="https://chatwoot-pr-${PR_NUMBER}.herokuapp.com"
+          else
+            echo "No base URL resolved; skipping."
+            exit 1
+          fi
+          BASE="${BASE%/}"
+          echo "base_url=$BASE" >> "$GITHUB_OUTPUT"
+      - name: Print deployment URL
+        run: echo "Checking ${{ steps.url.outputs.base_url }}"
+      - name: Check deployment status
+        run: |
+          set -euo pipefail
+          BASE_URL="${{ steps.url.outputs.base_url }}"
+          PATH_SUFFIX="${API_PATH:-/api}"
+          case "$PATH_SUFFIX" in
+            /*) ;;
+            *) PATH_SUFFIX="/${PATH_SUFFIX}" ;;
+          esac
+          API_URL="${BASE_URL}${PATH_SUFFIX}"
+
+          INITIAL="${INITIAL_SLEEP:-0}"
+          if [ -n "$INITIAL" ] && [ "$INITIAL" -gt 0 ] 2>/dev/null; then
+            echo "Initial sleep ${INITIAL}s before polling..."
+            sleep "$INITIAL"
+          fi
+
           max_attempts=10
           attempt=1
-          status_code=0
-          echo "Waiting for review app to be deployed/redeployed, trying in  10 minutes..."
-          sleep 600
-          while [ $attempt -le $max_attempts ]; do
-            response=$(curl -s -o /dev/null -w "%{http_code}" https://chatwoot-pr-${{ github.event.pull_request.number }}.herokuapp.com/api)
-            status_code=$(echo $response | head -n   1)
-            if [ $status_code -eq   200 ]; then
-              body=$(curl -s https://chatwoot-pr-${{ github.event.pull_request.number }}.herokuapp.com/api)
-              if echo "$body" | jq -e '.version and .timestamp and .queue_services == "ok" and .data_services == "ok"' > /dev/null; then
+
+          while [ "$attempt" -le "$max_attempts" ]; do
+            status_code=$(curl -sS -o /dev/null -w "%{http_code}" "$API_URL" || echo "000")
+            echo "Attempt $attempt/$max_attempts — GET $API_URL → HTTP $status_code"
+
+            if [ "$status_code" -eq 200 ]; then
+              body=$(curl -sS "$API_URL")
+              if echo "$body" | jq -e '.version and .timestamp and .queue_services == "ok" and .data_services == "ok"' > /dev/null 2>&1; then
                 echo "Deployment successful"
                 exit 0
-              else
-                echo "Deployment status unknown, retrying in   3 minutes..."
-                sleep 180
               fi
+              echo "Deployment status unknown (payload not healthy), retrying in 3 minutes..."
             else
-              echo "Waiting for review app to be ready, retrying in  3 minutes..."
-              sleep 180
-              attempt=$((attempt +  1))
+              echo "Waiting for app to be ready, retrying in 3 minutes..."
             fi
+
+            sleep 180
+            attempt=$((attempt + 1))
           done
+
           echo "Deployment failed after $max_attempts attempts"
-          exit  1
-          fi
+          exit 1

@@ -49,6 +49,7 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
     @inbox.update!(inbox_params)
     update_inbox_working_hours
     update_channel if channel_update_required?
+    refresh_telegram_webhook_if_needed
   end
 
   def agent_bot
@@ -90,6 +91,12 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
 
   def allowed_channel_types
     %w[web_widget api email line telegram whatsapp sms]
+  end
+
+  def refresh_telegram_webhook_if_needed
+    return unless @inbox.telegram?
+
+    @inbox.channel.refresh_telegram_webhook!
   end
 
   def update_inbox_working_hours

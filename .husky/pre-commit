@@ -1,8 +1,14 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# lint js and vue files
-npx --no-install lint-staged
+# lint js and vue files — use local install only (avoids npx prompting to fetch lint-staged in non-interactive Git UI)
+CHATPLATFORM_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LINT_STAGED="$CHATPLATFORM_ROOT/node_modules/.bin/lint-staged"
+if [ ! -f "$LINT_STAGED" ]; then
+  echo "husky(pre-commit): lint-staged not found. Run: cd chatplatform && pnpm install"
+  exit 1
+fi
+(cd "$CHATPLATFORM_ROOT" && "$LINT_STAGED")
 
 # lint only staged ruby files that still exist (not deleted)
 git diff --name-only --cached | xargs -I {} sh -c 'test -f "{}" && echo "{}"' | grep '\.rb$' | xargs -I {} bundle exec rubocop --force-exclusion -a "{}" || true

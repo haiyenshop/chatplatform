@@ -5,6 +5,7 @@ import dashboard from './dashboard/dashboard.routes';
 import store from 'dashboard/store';
 import { validateLoggedInRoutes } from '../helper/routeHelpers';
 import AnalyticsHelper from '../helper/AnalyticsHelper';
+import { buildChatwootLoginPageUrl } from 'shared/helpers/AlbumpikSsoHelper';
 
 const routes = [...dashboard.routes];
 
@@ -14,7 +15,12 @@ export const validateAuthenticateRoutePermission = (to, next) => {
   const { isLoggedIn, getCurrentUser: user } = store.getters;
 
   if (!isLoggedIn) {
-    window.location.assign('/app/login');
+    window.location.assign(
+      buildChatwootLoginPageUrl({
+        to,
+        chatwootConfig: window.chatwootConfig,
+      })
+    );
     return '';
   }
 

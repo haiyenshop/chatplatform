@@ -4,7 +4,10 @@
 if Rails.env.development?
   require 'annotate_rb'
 
-  AnnotateRb::Core.load_rake_tasks
+  # Do not call AnnotateRb::Core.load_rake_tasks — it hooks db:migrate and crashes on
+  # Ruby 3.4 with Psych TypeError (annotaterb 4.x; ANNOTATERB_SKIP_ON_DB_TASKS / yml
+  # are not reliably applied before the hook runs). Update model annotations manually:
+  #   bundle exec annotaterb
 
   task :set_annotation_options do
     # You can override any of these by setting an environment variable of the
@@ -44,7 +47,10 @@ if Rails.env.development?
       'ignore_unknown_models' => 'false',
       'hide_limit_column_types' => 'integer,bigint,boolean',
       'hide_default_column_types' => 'json,jsonb,hstore',
-      'skip_on_db_migrate' => 'false',
+      # Avoid annotate running after db:migrate (Ruby 3.4 + annotaterb can raise
+      # TypeError: no implicit conversion of Hash into String in Psych). Run
+      # `bundle exec annotaterb` manually when you need model annotations.
+      'skip_on_db_migrate' => 'true',
       'format_bare' => 'true',
       'format_rdoc' => 'false',
       'format_markdown' => 'false',

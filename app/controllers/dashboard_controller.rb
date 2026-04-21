@@ -67,6 +67,10 @@ class DashboardController < ActionController::Base
   end
 
   def app_config
+    dashboard_oauth_config.merge(albumpik_dashboard_config)
+  end
+
+  def dashboard_oauth_config
     {
       APP_VERSION: Chatwoot.config[:version],
       VAPID_PUBLIC_KEY: VapidService.public_key,
@@ -78,7 +82,18 @@ class DashboardController < ActionController::Base
       WHATSAPP_APP_ID: GlobalConfigService.load('WHATSAPP_APP_ID', ''),
       WHATSAPP_CONFIGURATION_ID: GlobalConfigService.load('WHATSAPP_CONFIGURATION_ID', ''),
       IS_ENTERPRISE: ChatwootApp.enterprise?,
-      AZURE_APP_ID: GlobalConfigService.load('AZURE_APP_ID', ''),
+      AZURE_APP_ID: GlobalConfigService.load('AZURE_APP_ID', '')
+    }
+  end
+
+  def albumpik_dashboard_config
+    {
+      ALBUMPIK_SSO_ENABLED: GlobalConfigService.load('ALBUMPIK_SSO_ENABLED', 'false'),
+      ALBUMPIK_LOGIN_URL: GlobalConfigService.load('ALBUMPIK_LOGIN_URL', ''),
+      SHOW_LOCAL_LOGIN_FORM: GlobalConfigService.load('SHOW_LOCAL_LOGIN_FORM', 'true'),
+      AUTO_REDIRECT_TO_ALBUMPIK_LOGIN: GlobalConfigService.load('AUTO_REDIRECT_TO_ALBUMPIK_LOGIN', 'false'),
+      REQUEST_ACCOUNT_ID: request_account_id,
+      REQUEST_ACCOUNT_STUDIO_ID: request_account_studio_id,
       GIT_SHA: GIT_HASH,
       ALLOWED_LOGIN_METHODS: allowed_login_methods
     }
@@ -97,6 +112,17 @@ class DashboardController < ActionController::Base
                         else
                           'dashboard'
                         end
+  end
+
+  def request_account_id
+    params[:account_id].presence || request.path.match(%r{/app/accounts/(\d+)})&.captures&.first
+  end
+
+  def request_account_studio_id
+    return if request_account_id.blank?
+
+    studio_attribute_key = GlobalConfigService.load('ALBUMPIK_STUDIO_ATTRIBUTE_KEY', 'albumpik_studio_id')
+    Account.find_by(id: request_account_id.to_i)&.custom_attributes&.dig(studio_attribute_key)
   end
 
   def sensitive_path?

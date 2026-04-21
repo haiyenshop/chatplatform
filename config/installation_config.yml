@@ -479,6 +479,37 @@
   type: boolean
 ## ------ End of Configs added for SAML SSO ------ ##
 
+## ------ Configs added for AlbumPik SSO ------ ##
+- name: ALBUMPIK_SSO_ENABLED
+  display_title: 'Enable AlbumPik SSO'
+  value: false
+  locked: false
+  description: 'Show the AlbumPik login flow on the Chatwoot login page.'
+  type: boolean
+- name: ALBUMPIK_LOGIN_URL
+  display_title: 'AlbumPik Login URL'
+  value:
+  locked: false
+  description: 'Absolute AlbumPik login URL used for Chatwoot direct access, for example https://albumpik.example.com/login'
+- name: SHOW_LOCAL_LOGIN_FORM
+  display_title: 'Show native Chatwoot login form'
+  value: true
+  locked: false
+  description: 'Keep the native Chatwoot login options visible during the rollout. Disable it after AlbumPik SSO is stable.'
+  type: boolean
+- name: AUTO_REDIRECT_TO_ALBUMPIK_LOGIN
+  display_title: 'Auto redirect login to AlbumPik'
+  value: false
+  locked: false
+  description: 'When enabled, the Chatwoot login page immediately redirects to AlbumPik instead of only showing a CTA.'
+  type: boolean
+- name: ALBUMPIK_STUDIO_ATTRIBUTE_KEY
+  display_title: 'AlbumPik Studio ID account attribute key'
+  value: albumpik_studio_id
+  locked: false
+  description: 'Account custom attribute key that stores the mapped AlbumPik studio id for direct access routing.'
+## ------ End of Configs added for AlbumPik SSO ------ ##
+
 ## ------ Configs added for Cloudflare ------ ##
 - name: CLOUDFLARE_API_KEY
   display_title: 'Cloudflare API Key'

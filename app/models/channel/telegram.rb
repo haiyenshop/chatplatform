@@ -80,6 +80,13 @@ class Channel::Telegram < ApplicationRecord
     message.content_attributes['in_reply_to_external_id']
   end
 
+  # Called after inbox PATCH from the dashboard when channel[bot_token] is absent (strong
+  # params for Telegram only permit bot_token). UI sends web_widget fields instead, so
+  # InboxesController#update_channel is skipped and this must re-register the webhook.
+  def refresh_telegram_webhook!
+    setup_telegram_webhook
+  end
+
   private
 
   def ensure_valid_bot_token
