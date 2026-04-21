@@ -45,13 +45,19 @@ jobs:
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          IMAGE_REPO: ghcr.io/${{ steps.repo_name.outputs.IMAGE_NAME }}
+          DEPLOY_TAG: ${{ github.sha }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          command_timeout: 30m # Increase timeout for long Docker builds
-          timeout: 60s # Increase SSH connection timeout
+          command_timeout: 30m
+          timeout: 60s
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,IMAGE_REPO,DEPLOY_TAG
           script: |
             cd ~/chatplatform
 
@@ -59,25 +65,21 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Define TAG based on commit SHA
-            DEPLOY_TAG=${{ github.sha }}
-            IMAGE_REPO=ghcr.io/${{ steps.repo_name.outputs.IMAGE_NAME }}
-
             # 1. Login to GHCR on EC2 and Pull pre-built image
-            echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            echo "Pulling image for tag: $DEPLOY_TAG..."
-            sudo docker pull $IMAGE_REPO:$DEPLOY_TAG
+            echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            echo "Pulling image tag: $DEPLOY_TAG..."
+            sudo docker pull "$IMAGE_REPO:$DEPLOY_TAG"
 
             # 2. Tag for docker-compose to use
-            sudo docker tag $IMAGE_REPO:$DEPLOY_TAG chatwoot/chatwoot:latest
-            sudo docker tag $IMAGE_REPO:$DEPLOY_TAG chatwoot/chatwoot:$DEPLOY_TAG
+            sudo docker tag "$IMAGE_REPO:$DEPLOY_TAG" chatwoot/chatwoot:latest
+            sudo docker tag "$IMAGE_REPO:$DEPLOY_TAG" chatwoot/chatwoot:"$DEPLOY_TAG"
 
-            # 3. Start containers using the newly pulled image
+            # 3. Start containers
             echo "Starting containers..."
             sudo docker-compose -f docker-compose.production.yaml up -d
 
-            # 4. Cleanup: Keep 2 most recent SHA builds and the latest image
-            echo "Cleaning up old images..."
+            # 4. Cleanup old images
+            echo "Cleaning up..."
             IMAGES_TO_DELETE=$(sudo docker images chatwoot/chatwoot --format "{{.Tag}} {{.CreatedAt}}" | \
               grep -v "latest" | \
               sort -k2 -r | \
@@ -85,13 +87,8 @@ jobs:
 
             if [ -n "$IMAGES_TO_DELETE" ]; then
               for tag in $IMAGES_TO_DELETE; do
-                echo "Deleting old image tag: $tag"
                 sudo docker rmi chatwoot/chatwoot:$tag || true
               done
             fi
 
-            # Cleanup GHCR pulled image if needed (optional, docker tag already keeps reference)
-            # sudo docker rmi $IMAGE_REPO:$DEPLOY_TAG
-
-            # Prune dangling layers
             sudo docker image prune -f
