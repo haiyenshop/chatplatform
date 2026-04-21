@@ -23,8 +23,20 @@ const isSupportedHttpUrl = url => {
 };
 
 const getAlbumpikLoginTarget = chatwootConfig => {
-  const url = buildUrl(chatwootConfig?.albumpikLoginUrl);
-  return isSupportedHttpUrl(url) ? url : null;
+  const value = chatwootConfig?.albumpikLoginUrl;
+  if (!value || typeof value !== 'string') return null;
+
+  const trimmed = value.trim();
+  // Require an absolute http(s) URL. Relative strings like "not-a-valid-url" would
+  // otherwise resolve against the dashboard origin and incorrectly enable SSO.
+  if (!/^https?:\/\//i.test(trimmed)) return null;
+
+  try {
+    const url = new URL(trimmed);
+    return isSupportedHttpUrl(url) ? url : null;
+  } catch {
+    return null;
+  }
 };
 
 const getDefaultReturnTo = hostURL => {
