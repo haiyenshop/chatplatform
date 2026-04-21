@@ -13,10 +13,16 @@ unless Rails.env.production?
 
   # Enables creating additional accounts from dashboard
   installation_config = InstallationConfig.find_by(name: 'CREATE_NEW_ACCOUNT_FROM_DASHBOARD')
-  installation_config.value = true
-  installation_config.save!
-  GlobalConfig.clear_cache
+  if installation_config
+    installation_config.value = true
+    installation_config.save!
+    GlobalConfig.clear_cache
+  end
 
+  # Idempotent: re-running db:seed must not fail on duplicate email / records.
+  if User.exists?(email: 'john@acme.inc')
+    Rails.logger.info('[db:seed] Development sample data already present; skipping dev seeds block.')
+  else
   account = Account.create!(
     name: 'Acme Inc'
   )
@@ -94,4 +100,5 @@ unless Rails.env.production?
   Seeders::MessageSeeder.create_sample_csat_collect_message conversation
 
   CannedResponse.create!(account: account, short_code: 'start', content: 'Hello welcome to chatwoot.')
+  end
 end

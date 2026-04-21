@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   base: &base
     build:
@@ -40,6 +38,8 @@ services:
       - VITE_DEV_SERVER_HOST=vite
       - NODE_ENV=development
       - RAILS_ENV=development
+      # annotaterb 4.x ignores rake set_defaults for migrate hooks; skip annotate after db tasks
+      - ANNOTATERB_SKIP_ON_DB_TASKS=1
     entrypoint: docker/entrypoints/rails.sh
     command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
 
@@ -92,7 +92,7 @@ services:
     environment:
       - POSTGRES_DB=chatwoot
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=
+      - POSTGRES_PASSWORD=AjpW**4425
 
   redis:
     image: redis:alpine

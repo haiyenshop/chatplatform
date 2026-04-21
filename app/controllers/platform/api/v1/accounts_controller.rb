@@ -1,4 +1,14 @@
 class Platform::Api::V1::AccountsController < PlatformController
+  # Links an existing Account to the authenticated PlatformApp so subsequent
+  # account_users calls succeed (Chatwoot default: only accounts created via Platform API).
+  def link
+    account = Account.find(params[:id])
+    @platform_app.platform_app_permissibles.find_or_create_by!(permissible: account)
+    head :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Account not found' }, status: :not_found
+  end
+
   def index
     @resources = @platform_app.platform_app_permissibles
                               .where(permissible_type: 'Account')

@@ -1,0 +1,4 @@
+# Annotaterb 4.x reads this file (see https://github.com/drwl/annotaterb).
+# Auto-annotate after db:migrate triggers a Psych error on Ruby 3.4 in Docker.
+# Run annotations manually when needed: bundle exec annotaterb
+skip_on_db_migrate: true

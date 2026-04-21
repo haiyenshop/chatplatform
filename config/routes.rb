@@ -502,6 +502,10 @@ Rails.application.routes.draw do
           delete :avatar, on: :member
         end
         resources :accounts, only: [:index, :create, :show, :update, :destroy] do
+          member do
+            # AlbumPik: grant PlatformApp access to an existing Account (e.g. seed account) before account_users
+            post :link
+          end
           resources :account_users, only: [:index, :create] do
             collection do
               delete :destroy

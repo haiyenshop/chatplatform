@@ -58,6 +58,8 @@ That means:
 - new Chatwoot accounts/users created from AlbumPik through the same Platform API token are accessible immediately
 - existing Chatwoot accounts/users created outside that PlatformApp must be granted manually through `PlatformAppPermissible`
 
+**AlbumPik Chatwoot fork:** `POST /platform/api/v1/accounts/:id/link` (Platform App token) creates that `PlatformAppPermissible` for an existing account so AlbumPik can call `account_users` without a manual console step. Vanilla Chatwoot has no such route.
+
 ## Provision the PlatformApp
 
 ### Option A: Super Admin UI

@@ -200,7 +200,10 @@ SECRET_KEY_BASE=thay_bang_secret_that
 
 ## 2. Build và chạy services
 
+`rails` / `vite` / `sidekiq` dùng `FROM chatwoot:development` — đây là **image build local** từ service `base`, **không** pull được từ Docker Hub. Phải build `base` trước:
+
 ```bash
+docker compose build base
 docker compose up --build
 ```
 
