@@ -20,6 +20,8 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
+          command_timeout: 30m # Increase timeout for long Docker builds
+          timeout: 60s # Increase SSH connection timeout
           script: |
             cd ~/chatplatform
 
@@ -31,7 +33,7 @@ jobs:
             DEPLOY_TAG=${{ github.sha }}
 
             # 1. Build image manually with SHA tag (to keep history)
-            echo "Building image for tag: $DEPLOY_TAG..."
+            echo "Building image for tag: $DEPLOY_TAG... (This may take up to 20-30 minutes)"
             sudo docker build -t chatwoot/chatwoot:$DEPLOY_TAG -f docker/Dockerfile .
 
             # 2. Tag as latest for docker-compose to use
