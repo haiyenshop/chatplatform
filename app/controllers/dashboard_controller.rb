@@ -67,6 +67,10 @@ class DashboardController < ActionController::Base
   end
 
   def app_config
+    dashboard_oauth_config.merge(albumpik_dashboard_config)
+  end
+
+  def dashboard_oauth_config
     {
       APP_VERSION: Chatwoot.config[:version],
       VAPID_PUBLIC_KEY: VapidService.public_key,
@@ -78,7 +82,12 @@ class DashboardController < ActionController::Base
       WHATSAPP_APP_ID: GlobalConfigService.load('WHATSAPP_APP_ID', ''),
       WHATSAPP_CONFIGURATION_ID: GlobalConfigService.load('WHATSAPP_CONFIGURATION_ID', ''),
       IS_ENTERPRISE: ChatwootApp.enterprise?,
-      AZURE_APP_ID: GlobalConfigService.load('AZURE_APP_ID', ''),
+      AZURE_APP_ID: GlobalConfigService.load('AZURE_APP_ID', '')
+    }
+  end
+
+  def albumpik_dashboard_config
+    {
       ALBUMPIK_SSO_ENABLED: GlobalConfigService.load('ALBUMPIK_SSO_ENABLED', 'false'),
       ALBUMPIK_LOGIN_URL: GlobalConfigService.load('ALBUMPIK_LOGIN_URL', ''),
       SHOW_LOCAL_LOGIN_FORM: GlobalConfigService.load('SHOW_LOCAL_LOGIN_FORM', 'true'),
