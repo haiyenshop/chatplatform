@@ -9,9 +9,39 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Convert repository name to lowercase
+        id: repo_name
+        run: echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.repo_name.outputs.IMAGE_NAME }}:latest
+            ghcr.io/${{ steps.repo_name.outputs.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@master
@@ -25,21 +55,24 @@ jobs:
           script: |
             cd ~/chatplatform
 
-            # Pull latest changes
+            # Pull latest changes (for config/compose files)
             git fetch origin main
             git reset --hard origin/main
 
             # Define TAG based on commit SHA
             DEPLOY_TAG=${{ github.sha }}
+            IMAGE_REPO=ghcr.io/${{ steps.repo_name.outputs.IMAGE_NAME }}
 
-            # 1. Build image manually with SHA tag (to keep history)
-            echo "Building image for tag: $DEPLOY_TAG... (This may take up to 20-30 minutes)"
-            sudo docker build -t chatwoot/chatwoot:$DEPLOY_TAG -f docker/Dockerfile .
+            # 1. Login to GHCR on EC2 and Pull pre-built image
+            echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "Pulling image for tag: $DEPLOY_TAG..."
+            sudo docker pull $IMAGE_REPO:$DEPLOY_TAG
 
-            # 2. Tag as latest for docker-compose to use
-            sudo docker tag chatwoot/chatwoot:$DEPLOY_TAG chatwoot/chatwoot:latest
+            # 2. Tag for docker-compose to use
+            sudo docker tag $IMAGE_REPO:$DEPLOY_TAG chatwoot/chatwoot:latest
+            sudo docker tag $IMAGE_REPO:$DEPLOY_TAG chatwoot/chatwoot:$DEPLOY_TAG
 
-            # 3. Start containers using the newly built 'latest' image
+            # 3. Start containers using the newly pulled image
             echo "Starting containers..."
             sudo docker-compose -f docker-compose.production.yaml up -d
 
@@ -56,6 +89,9 @@ jobs:
                 sudo docker rmi chatwoot/chatwoot:$tag || true
               done
             fi
+
+            # Cleanup GHCR pulled image if needed (optional, docker tag already keeps reference)
+            # sudo docker rmi $IMAGE_REPO:$DEPLOY_TAG
 
             # Prune dangling layers
             sudo docker image prune -f
