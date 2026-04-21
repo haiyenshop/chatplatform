@@ -25,20 +25,20 @@ jobs:
 
             # Pull latest changes
             git fetch origin main
-            git reset --hard origin main
+            git reset --hard origin/main
 
             # Define TAG based on commit SHA
             DEPLOY_TAG=${{ github.sha }}
 
             # Restart containers with build and specific TAG
-            TAG=$DEPLOY_TAG docker-compose -f docker-compose.production.yaml up -d --build
+            TAG=$DEPLOY_TAG sudo docker-compose -f docker-compose.production.yaml up -d --build
 
             # Also tag this build as latest
-            docker tag chatwoot/chatwoot:$DEPLOY_TAG chatwoot/chatwoot:latest
+            sudo docker tag chatwoot/chatwoot:$DEPLOY_TAG chatwoot/chatwoot:latest
 
             # Cleanup: Keep 2 most recent builds (excluding latest) and latest itself
             echo "Cleaning up old images..."
-            IMAGES_TO_DELETE=$(docker images chatwoot/chatwoot --format "{{.Tag}} {{.CreatedAt}}" | \
+            IMAGES_TO_DELETE=$(sudo docker images chatwoot/chatwoot --format "{{.Tag}} {{.CreatedAt}}" | \
               grep -v "latest" | \
               sort -k2 -r | \
               awk 'NR > 2 {print $1}')
@@ -46,9 +46,9 @@ jobs:
             if [ -n "$IMAGES_TO_DELETE" ]; then
               for tag in $IMAGES_TO_DELETE; do
                 echo "Deleting old image tag: $tag"
-                docker rmi chatwoot/chatwoot:$tag || true
+                sudo docker rmi chatwoot/chatwoot:$tag || true
               done
             fi
 
             # Prune dangling images
-            docker image prune -f
+            sudo docker image prune -f
