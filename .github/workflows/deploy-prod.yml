@@ -91,4 +91,8 @@ jobs:
               done
             fi
 
+            # Cleanup GHCR pulled image
+            sudo docker rmi "$IMAGE_REPO:$DEPLOY_TAG" || true
+
+            # Prune dangling layers
             sudo docker image prune -f
