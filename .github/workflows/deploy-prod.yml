@@ -30,13 +30,18 @@ jobs:
             # Define TAG based on commit SHA
             DEPLOY_TAG=${{ github.sha }}
 
-            # Restart containers with build and specific TAG
-            TAG=$DEPLOY_TAG sudo docker-compose -f docker-compose.production.yaml up -d --build
+            # 1. Build image manually with SHA tag (to keep history)
+            echo "Building image for tag: $DEPLOY_TAG..."
+            sudo docker build -t chatwoot/chatwoot:$DEPLOY_TAG -f docker/Dockerfile .
 
-            # Also tag this build as latest
+            # 2. Tag as latest for docker-compose to use
             sudo docker tag chatwoot/chatwoot:$DEPLOY_TAG chatwoot/chatwoot:latest
 
-            # Cleanup: Keep 2 most recent builds (excluding latest) and latest itself
+            # 3. Start containers using the newly built 'latest' image
+            echo "Starting containers..."
+            sudo docker-compose -f docker-compose.production.yaml up -d
+
+            # 4. Cleanup: Keep 2 most recent SHA builds and the latest image
             echo "Cleaning up old images..."
             IMAGES_TO_DELETE=$(sudo docker images chatwoot/chatwoot --format "{{.Tag}} {{.CreatedAt}}" | \
               grep -v "latest" | \
@@ -50,5 +55,5 @@ jobs:
               done
             fi
 
-            # Prune dangling images
+            # Prune dangling layers
             sudo docker image prune -f
