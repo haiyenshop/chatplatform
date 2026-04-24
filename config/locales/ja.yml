@@ -18,6 +18,35 @@
 #available at https://guides.rubyonrails.org/i18n.html.
 ja:
   hello: 'こんにちは世界'
+  mailers:
+    agent_notifications:
+      conversation_notifications:
+        subjects:
+          conversation_creation: '%{user_name}さん、新しい会話 [ID - %{display_id}] が%{inbox_name}で作成されました。'
+          conversation_assignment: '%{user_name}さん、新しい会話 [ID - %{display_id}] があなたに割り当てられました。'
+          conversation_mention: '%{user_name}さん、会話 [ID - %{display_id}] でメンションされました'
+          assigned_conversation_new_message: '%{user_name}さん、担当中の会話 [ID - %{display_id}] に新しいメッセージがあります。'
+          participating_conversation_new_message: '%{user_name}さん、参加中の会話 [ID - %{display_id}] に新しいメッセージがあります。'
+          sla_missed_first_response: '会話 [ID - %{display_id}] は初回返信のSLAを超過しました'
+          sla_missed_next_response: '会話 [ID - %{display_id}] は次回返信のSLAを超過しました'
+          sla_missed_resolution: '会話 [ID - %{display_id}] は解決時間のSLAを超過しました'
+        greeting: '%{name}さん、'
+        sender_you: 'あなた'
+        attachment: '添付ファイル'
+        attachment_link: '表示する'
+        action_html: "<a href='%{action_url}'>こちら</a>から確認してください。"
+        view_message: 'メッセージを表示'
+        previous_messages: '以前のメッセージ:'
+        sla_action: 'すぐに対応してください。'
+        bodies:
+          conversation_creation: "新しい会話 (<a href='%{action_url}'>#%{display_id}</a>) が%{inbox_name}で作成されました。<strong>%{contact_name}</strong>さんのメッセージ:"
+          conversation_assignment: '新しい会話があなたに割り当てられました。'
+          conversation_mention: '会話でメンションされました。<b>%{sender_name}</b>さんのメッセージ:'
+          assigned_conversation_new_message: '担当中の会話に新しいメッセージが届きました。'
+          participating_conversation_new_message: '参加中の会話に新しいメッセージが届きました。'
+          sla_missed_first_response: '会話 #%{display_id}（%{inbox_name}）は、ポリシー %{policy_name} の初回返信SLAを超過しました。'
+          sla_missed_next_response: '会話 #%{display_id}（%{inbox_name}）は、ポリシー %{policy_name} の次回返信SLAを超過しました。'
+          sla_missed_resolution: '会話 #%{display_id}（%{inbox_name}）は、ポリシー %{policy_name} の解決時間SLAを超過しました。'
   inbox:
     reauthorization:
       success: 'Channel reauthorized successfully'

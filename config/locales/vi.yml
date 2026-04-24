@@ -18,6 +18,35 @@
 #available at https://guides.rubyonrails.org/i18n.html.
 vi:
   hello: 'Chào thế giới'
+  mailers:
+    agent_notifications:
+      conversation_notifications:
+        subjects:
+          conversation_creation: '%{user_name}, cuộc trò chuyện mới [ID - %{display_id}] đã được tạo trong %{inbox_name}.'
+          conversation_assignment: '%{user_name}, cuộc trò chuyện mới [ID - %{display_id}] đã được giao cho bạn.'
+          conversation_mention: '%{user_name}, bạn được nhắc đến trong cuộc trò chuyện [ID - %{display_id}]'
+          assigned_conversation_new_message: '%{user_name}, có tin nhắn mới trong cuộc trò chuyện được giao cho bạn [ID - %{display_id}].'
+          participating_conversation_new_message: '%{user_name}, có tin nhắn mới trong cuộc trò chuyện bạn đang tham gia [ID - %{display_id}].'
+          sla_missed_first_response: 'Cuộc trò chuyện [ID - %{display_id}] đã quá hạn SLA phản hồi đầu tiên'
+          sla_missed_next_response: 'Cuộc trò chuyện [ID - %{display_id}] đã quá hạn SLA phản hồi tiếp theo'
+          sla_missed_resolution: 'Cuộc trò chuyện [ID - %{display_id}] đã quá hạn SLA xử lý'
+        greeting: 'Xin chào %{name},'
+        sender_you: 'Bạn'
+        attachment: 'Tệp đính kèm'
+        attachment_link: 'Bấm để xem'
+        action_html: "Bấm <a href='%{action_url}'>vào đây</a> để xử lý."
+        view_message: 'Xem tin nhắn'
+        previous_messages: 'Tin nhắn trước đó:'
+        sla_action: 'Vui lòng xử lý ngay.'
+        bodies:
+          conversation_creation: "Một cuộc trò chuyện mới (<a href='%{action_url}'>#%{display_id}</a>) đã được tạo trong %{inbox_name}. <strong>%{contact_name}</strong> đã viết:"
+          conversation_assignment: 'Một cuộc trò chuyện mới đã được giao cho bạn.'
+          conversation_mention: 'Bạn được nhắc đến trong một cuộc trò chuyện. <b>%{sender_name}</b> đã viết:'
+          assigned_conversation_new_message: 'Bạn vừa nhận được một tin nhắn mới trong cuộc trò chuyện được giao cho bạn.'
+          participating_conversation_new_message: 'Bạn vừa nhận được một tin nhắn mới trong cuộc trò chuyện bạn đang tham gia.'
+          sla_missed_first_response: 'Cuộc trò chuyện #%{display_id} trong %{inbox_name} đã quá hạn SLA phản hồi đầu tiên theo chính sách %{policy_name}.'
+          sla_missed_next_response: 'Cuộc trò chuyện #%{display_id} trong %{inbox_name} đã quá hạn SLA phản hồi tiếp theo theo chính sách %{policy_name}.'
+          sla_missed_resolution: 'Cuộc trò chuyện #%{display_id} trong %{inbox_name} đã quá hạn SLA xử lý theo chính sách %{policy_name}.'
   inbox:
     reauthorization:
       success: 'Channel reauthorized successfully'

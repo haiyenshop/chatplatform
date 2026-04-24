@@ -31,6 +31,35 @@
 
 en:
   hello: 'Hello world'
+  mailers:
+    agent_notifications:
+      conversation_notifications:
+        subjects:
+          conversation_creation: '%{user_name}, A new conversation [ID - %{display_id}] has been created in %{inbox_name}.'
+          conversation_assignment: '%{user_name}, A new conversation [ID - %{display_id}] has been assigned to you.'
+          conversation_mention: '%{user_name}, You have been mentioned in conversation [ID - %{display_id}]'
+          assigned_conversation_new_message: '%{user_name}, New message in your assigned conversation [ID - %{display_id}].'
+          participating_conversation_new_message: '%{user_name}, New message in your participating conversation [ID - %{display_id}].'
+          sla_missed_first_response: 'Conversation [ID - %{display_id}] missed SLA for first response'
+          sla_missed_next_response: 'Conversation [ID - %{display_id}] missed SLA for next response'
+          sla_missed_resolution: 'Conversation [ID - %{display_id}] missed SLA for resolution time'
+        greeting: 'Hi %{name},'
+        sender_you: 'You'
+        attachment: 'Attachment'
+        attachment_link: 'Click here to view'
+        action_html: "Click <a href='%{action_url}'>here</a> to get cracking."
+        view_message: 'View Message'
+        previous_messages: 'Previous messages:'
+        sla_action: 'Please address immediately.'
+        bodies:
+          conversation_creation: "A new conversation (<a href='%{action_url}'>#%{display_id}</a>) has been created in %{inbox_name}. <strong>%{contact_name}</strong> wrote:"
+          conversation_assignment: 'Time to save the world. A new conversation has been assigned to you'
+          conversation_mention: "You've been mentioned in a conversation. <b>%{sender_name}</b> wrote:"
+          assigned_conversation_new_message: 'You have received a new message in your assigned conversation.'
+          participating_conversation_new_message: 'You have received a new message in a conversation you are participating.'
+          sla_missed_first_response: 'Conversation #%{display_id} in %{inbox_name} has missed the SLA for first response under policy %{policy_name}.'
+          sla_missed_next_response: 'Conversation #%{display_id} in %{inbox_name} has missed the SLA for next response under policy %{policy_name}.'
+          sla_missed_resolution: 'Conversation #%{display_id} in %{inbox_name} has missed the SLA for resolution time under policy %{policy_name}.'
   inbox:
     reauthorization:
       success: 'Channel reauthorized successfully'

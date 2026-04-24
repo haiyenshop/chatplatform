@@ -36,6 +36,17 @@ RSpec.describe AgentNotifications::ConversationNotificationsMailer do
     it 'renders the receiver email' do
       expect(mail.to).to eq([agent.email])
     end
+
+    it 'does not render powered by footer' do
+      expect(mail.body.decoded).not_to include('Powered by')
+    end
+
+    it 'renders localized subject and body when account locale is Vietnamese' do
+      account.update!(locale: 'vi')
+
+      expect(mail.subject).to eq("#{agent.available_name}, cuộc trò chuyện mới [ID - #{conversation.display_id}] đã được giao cho bạn.")
+      expect(mail.body.decoded).to include('Một cuộc trò chuyện mới đã được giao cho bạn.')
+    end
   end
 
   describe 'conversation_mention' do
